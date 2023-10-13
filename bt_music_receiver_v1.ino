@@ -10,7 +10,8 @@ IrDecode irDecode;
 bool playPass = false;    // Playing
 uint8_t playerMode = 1;  // 1 = BT, 2 = AUX
 uint8_t butNum = 0;
-bool btMode = false;
+uint8_t selectedSource = 1; // 1 = BT , 2 = USB, 3 AUX, 4 = Optical, 5 = ARC
+bool btOnMode = false;
 
 //const uint8_t IRPIN = 4;
 
@@ -37,7 +38,7 @@ void avrc_metadata_callback(uint8_t id, const uint8_t *text) {
 void doKeyIrAction(uint8_t actionNum) {
     //Player routine
     if (a2dp_sink.get_audio_state()==ESP_A2D_AUDIO_STATE_STARTED){
-        btMode = true;
+        btOnMode = true;
     }
     //Serial.print("Key ");  Serial.print(actionNum);  Serial.println(" Pressed");
     if (playerMode == 1) {
@@ -48,23 +49,23 @@ void doKeyIrAction(uint8_t actionNum) {
             if (playPass) {
                 //Pause
                 Serial.println("pause");
-                if(btMode) {a2dp_sink.pause();}
+                if(btOnMode) {a2dp_sink.pause();}
                 playPass = false;
             } else {
                 //play
                 Serial.println("play");
-                if(btMode) {a2dp_sink.play();}
+                if(btOnMode) {a2dp_sink.play();}
                 playPass = true;
             }
         } else if (actionNum == 1) {                                    // PREVIOUS
             Serial.println("Previous");
-            if(btMode) {a2dp_sink.previous();}
+            if(btOnMode) {a2dp_sink.previous();}
         } else if (actionNum == 2) {                                    // NEXT
             Serial.println("Next");
-            if(btMode) {a2dp_sink.next();}
+            if(btOnMode) {a2dp_sink.next();}
         } else if (actionNum == 4) {                                    // VOLUME MINUS
             Serial.println("Vol -");
-            if(btMode) {
+            if(btOnMode) {
                 int volValue = a2dp_sink.get_volume();
                 volValue = volValue - 4;
                 if(volValue < 0 ) {
@@ -75,7 +76,7 @@ void doKeyIrAction(uint8_t actionNum) {
             }
     } else if (actionNum == 5) {                                        // VOLUME PLUS
                 Serial.println("Vol +");
-                if(btMode) {
+                if(btOnMode) {
                 int volValue = a2dp_sink.get_volume();
                 volValue = volValue + 4;
                 if(volValue > 127 ) {
@@ -122,8 +123,13 @@ void setup() {
     //set the resolution to 12 bits (0-4096)
     analogReadResolution(12);  
 
-  a2dp_sink.set_avrc_metadata_callback(avrc_metadata_callback);
-  a2dp_sink.start("MyMusic");  
+    a2dp_sink.set_avrc_metadata_callback(avrc_metadata_callback);
+    //a2dp_sink.start("MyMusic");  
+
+    a2dp_sink.set_auto_reconnect(true, 1000);
+    a2dp_sink.start("MyMusic");  
+
+
 
 }
 
@@ -135,6 +141,7 @@ void loop() {
             // Serial.printf("KEY INPUT %d\n", butNum);
             doKeyIrAction(butNum);
             butNum = 0;
+            vTaskDelay(400 / portTICK_PERIOD_MS);
         }    
     // }
 
@@ -229,5 +236,8 @@ void loop() {
         bitCount = 0;
         //startIr = false;
         prevPinData = HIGH;
-    }  
+    }
+    digitalWrite(4, LOW);
+    delayMicroseconds(10);
+    digitalWrite(4, HIGH);
 }
