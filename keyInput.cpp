@@ -13,15 +13,14 @@ uint8_t KeyInput::start() {
 uint8_t KeyInput::getKeyValue() {
     int adcVol = analogReadMilliVolts(KEYPORT);
     //Serial.println("Volatge : "); Serial.println(adcVol);
-    /* Added on 20231013*/
+
     if(adcVol > 3000) {
         debounce --;
         if(debounce < 1) {
             debounce = 0;
         }
         return 0;
-    }
-    if (adcVol > LVL1LO && adcVol < LVL1HI) {
+    } else if (adcVol > LVL1LO && adcVol < LVL1HI) {
         if (butNum == 1) {
             debounce++;
         } else {
@@ -57,21 +56,15 @@ uint8_t KeyInput::getKeyValue() {
             debounce = 1;
         }
     } else {
-        debounce --;
+        return 0;
     }
-
+    //Serial.printf("butNum = %d, debounce = %d", butNum, debounce);
     if (debounce > 50) {
         debounce = 0;
         uint8_t retBut = butNum;
         butNum = 0;
-        debounce = debounce + 2;
+        // debounce = debounce + 2;
         return retBut;      
-    } else {
-        if(debounce < 1) {
-            debounce = 0;
-            butNum = 0;
-        }
-        return 0;
     }
-    //return butNum;
+    return 0; 
 }

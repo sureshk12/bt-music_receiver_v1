@@ -13,7 +13,8 @@ uint8_t butNum = 0;
 uint8_t selectedSource = 1; // 1 = BT , 2 = USB, 3 AUX, 4 = Optical, 5 = ARC
 bool btOnMode = false;
 
-//const uint8_t IRPIN = 4;
+bool foundKey = false;
+double foundKeyTime = millis();
 
 int prevTime = micros();
 int durationTime = 0;
@@ -22,14 +23,6 @@ int timeArray [32] = {};
 uint8_t bitCount = 0;
 uint32_t irData = 0;
 
-//bool startIr = false;
-
-/*
-//testing
-uint32_t prevCounterTime = 0;
-int testCounter = 0;
-int actualDataStartTime = 0;
-*/
 
 void avrc_metadata_callback(uint8_t id, const uint8_t *text) {
   Serial.printf("==> AVRC metadata rsp: attribute id 0x%x, %s\n", id, text);
@@ -107,7 +100,7 @@ void doKeyIrAction(uint8_t actionNum) {
             Serial.println("BASS -");                                   // BASS Minus
         }
     }
-    delay(400);
+    //delay(400);
 }
 
 void setup() {
@@ -119,6 +112,9 @@ void setup() {
     for(int x = 0; x < 32; x++) {
         timeArray[x] = 0;
     }
+
+    pinMode(4, OUTPUT);
+    digitalWrite(4, HIGH);
 
     //set the resolution to 12 bits (0-4096)
     analogReadResolution(12);  
@@ -135,22 +131,21 @@ void setup() {
 
 void loop() {
   
-    // if (!startIr) {
-        butNum = keyinput.getKeyValue();
-        if(butNum != 0) {
-            // Serial.printf("KEY INPUT %d\n", butNum);
+    butNum = keyinput.getKeyValue();
+    if(butNum != 0) {
+        // Serial.printf("KEY INPUT %d\n", butNum);
+        if(foundKey) {
+            if((millis() - foundKeyTime) > 600) {
+                foundKey = false;
+            } 
+        }
+        if(!foundKey) {
             doKeyIrAction(butNum);
             butNum = 0;
-            vTaskDelay(400 / portTICK_PERIOD_MS);
-        }    
-    // }
-
-    // butNum = irDecode.getIrData();
-    // if(butNum != 0) {
-    //     // Serial.printf("KEY INPUT %d\n", butNum);
-    //     doKeyIrAction(butNum);
-    //     butNum = 0;        
-    // }
+            foundKey = true;
+            foundKeyTime = millis();
+        }
+    }    
     
     //Remote
     uint8_t pinData = digitalRead(IRPORT);
@@ -237,7 +232,5 @@ void loop() {
         //startIr = false;
         prevPinData = HIGH;
     }
-    digitalWrite(4, LOW);
-    delayMicroseconds(10);
-    digitalWrite(4, HIGH);
+
 }
