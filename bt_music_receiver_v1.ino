@@ -113,12 +113,18 @@ void setup() {
         timeArray[x] = 0;
     }
 
-    pinMode(4, OUTPUT);
-    digitalWrite(4, HIGH);
-
     //set the resolution to 12 bits (0-4096)
     analogReadResolution(12);  
 
+    i2s_pin_config_t my_pin_config = {
+        .mck_io_num = I2S_PIN_NO_CHANGE,
+        .bck_io_num = 4,
+        .ws_io_num = 5,
+        .data_out_num = 25,
+        .data_in_num = I2S_PIN_NO_CHANGE
+    };
+    a2dp_sink.set_pin_config(my_pin_config);
+    
     a2dp_sink.set_avrc_metadata_callback(avrc_metadata_callback);
     //a2dp_sink.start("MyMusic");  
 
@@ -173,8 +179,8 @@ void loop() {
             if(timeArray[x] > 1634) {
                 irData = irData ^ 1; 
             }
-        //Serial.printf("%d, ",timeArray[x]);
-        timeArray[x] = 0;
+            //Serial.printf("%d, ",timeArray[x]);
+            timeArray[x] = 0;
         }
         //Serial.println();
         //Serial.print("IR DATA is = "); Serial.println(irData);
@@ -232,5 +238,4 @@ void loop() {
         //startIr = false;
         prevPinData = HIGH;
     }
-
 }
